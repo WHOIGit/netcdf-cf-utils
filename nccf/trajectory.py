@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 import netCDF4 as nc
 
+from .utils import create_crs_var, create_empty_var, create_id_var
+
 def df2trajectory(df, ds, global_attributes={}, platform_attributes={}, instrument_attributes={}, units={}):
     """Convert a Pandas dataframe to a netCDF4 CF trajectory dataset.
     The dataframe is assumed to be indexed by UTC datetime and have
@@ -37,12 +39,8 @@ def df2trajectory(df, ds, global_attributes={}, platform_attributes={}, instrume
     for k, v in global_attributes.items():
         ds.setncattr(k, v)
 
-    # trajectory id
-    ds.createDimension('trajectory',1)
-    tid = ds.createVariable('trajectory',int,('trajectory',))
-    tid.cf_role = 'trajectory_id'
-    tid.long_name = 'trajectory' # does not matter what this is
-    tid[:] = [0]
+    # trajectory id and dimension
+    create_id_var(ds, 'trajectory')
     
     FILL_VALUE = -9999.9
 
@@ -81,23 +79,12 @@ def df2trajectory(df, ds, global_attributes={}, platform_attributes={}, instrume
     depth.positive = 'down'
     depth.axis = 'Z'
 
-    plat = ds.createVariable('platform','S1')
-    for k, v in platform_attributes.items():
-        plat.setncattr(k, v)
-    plat = ''
-
-    inst = ds.createVariable('instrument','S1')
-    for k, v in instrument_attributes.items():
-        inst.setncattr(k, v)
+    # platform / instrument
+    create_empty_var(ds, 'platform', platform_attributes)
+    create_empty_var(ds, 'instrument', instrument_attributes)
 
     # crs
-    crs = ds.createVariable('crs', np.float)
-    crs.grid_mapping_name = 'latitude_longitude'
-    crs.longitude_of_prime_meridian = 0.
-    crs.semi_major_axis = 6378137.
-    crs.inverse_flattening = 298.257223563
-    crs.epsg_code = 'EPSG:4326'
-    crs = 0.
+    create_crs_var(ds)
 
     # all non-spatiotemporal variables
     for varname in variables.columns:
