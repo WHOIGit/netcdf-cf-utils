@@ -46,13 +46,13 @@ class TimeseriesWriter(CFWriter):
         
         # lat / lon / depth
         vlat = self.create_lat_var(dimensions=scalar_dim)
-        vlat = lat
+        vlat[:] = lat
 
         vlon = self.create_lon_var(dimensions=scalar_dim)
-        vlon = lon
+        vlon[:] = lon
 
         vdepth = self.create_depth_var(dimensions=scalar_dim)
-        vdepth = depth
+        vdepth[:] = depth
 
         # platform / instrument
 
