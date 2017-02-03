@@ -49,8 +49,8 @@ def df2timeseries(df, ds, lat=0., lon=0., depth=0., global_attributes={}, platfo
 
     vlon = ds.createVariable('longitude', np.float, ('timeseries',))
     vlon.units = 'degrees_east'
-    vlon.valid_min = -90.
-    vlon.valid_max = 90.
+    vlon.valid_min = -180.
+    vlon.valid_max = 180.
     vlon.axis = 'X'
     vlon = lon
 
