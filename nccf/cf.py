@@ -49,12 +49,14 @@ class CFWriter(object):
         idvar[:] = [0]
         return idvar
 
-    def create_time_var(self, times, name='time'):
+    def create_time_var(self, times, dimensions=None):
+        if dimensions is None:
+            dimensions = ('time',)
         """creates time dimension and time variable.
         units are floating point s since unix epoch"""
         # call the dimension and variable the same thing
-        self.ds.createDimension(name, size=len(times))
-        t = self.ds.createVariable(name, times.dtype, (name,))
+        self.ds.createDimension('time', size=len(times))
+        t = self.ds.createVariable('time', times.dtype, dimensions)
         t.units = 'seconds since 1970-01-01T00:00:00Z'
         t.standard_name = 'time'
         t.long_name = 'time'
@@ -89,14 +91,23 @@ class CFWriter(object):
         vdepth.valid_max = 10971.
         return vdepth
 
-    def create_var(self, name, values, dimensions, fill_value=FILL_VALUE, valid_range=None):
+    def create_var(self, name, values, dimensions, fill_value=FILL_VALUE, valid_range=None, units=None):
         v = self.ds.createVariable(name, values.dtype, dimensions, fill_value=fill_value)
         v.long_name = name
         v.standard_name = name
         if valid_range is not None:
             v.valid_min, v.valid_max = valid_range
+        if units is None:
+            units = '1'
+        v.units = units
         v[:] = np.array(values)
         return v
+
+    def create_platform_var(self, attributes={}):
+        return self.create_empty_var('platform', attributes)
+
+    def create_instrument_var(self, attributes={}):
+        return self.create_empty_var('instrument', attributes)
         
-    
+
         

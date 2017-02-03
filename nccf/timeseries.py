@@ -42,35 +42,30 @@ class TimeseriesWriter(CFWriter):
         times = datetimes2unixtimes(df.index)
         self.create_time_var(times)
 
+        scalar_dim = ('timeseries',)
+        
         # lat / lon / depth
-        vlat = self.create_lat_var(('timeseries',))
+        vlat = self.create_lat_var(dimensions=scalar_dim)
         vlat = lat
 
-        vlon = self.create_lon_var(('timeseries',))
+        vlon = self.create_lon_var(dimensions=scalar_dim)
         vlon = lon
 
-        vdepth = self.create_depth_var(('timeseries',))
+        vdepth = self.create_depth_var(dimensions=scalar_dim)
         vdepth = depth
 
         # platform / instrument
 
-        platform_var = 'platform'
-        instrument_var = 'instrument'
-        
-        self.create_empty_var(platform_var, platform_attributes)
-        self.create_empty_var(instrument_var, instrument_attributes)
+        self.create_platform_var(platform_attributes)
+        self.create_instrument_var(instrument_attributes)
 
         # crs
         self.create_crs_var()
 
         # all non-spatiotemporal variables
         for varname in df.columns:
-            v = self.create_var(varname, df[varname], ('timeseries','time'))
+            v = self.create_var(varname, df[varname], ('timeseries','time'), units=units.get(varname))
             v.coordinates = 'time depth latitude longitude'
-            if varname in units:
-                v.units = units[varname]
-            else:
-                v.units = '1'
             v.grid_mapping = 'crs'
-            v.platform = platform_var
-            v.instrument = instrument_var
+            v.platform = 'platform'
+            v.instrument = 'instrument'
