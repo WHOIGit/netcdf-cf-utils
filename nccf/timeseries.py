@@ -4,80 +4,73 @@ import numpy as np
 import pandas as pd
 import netCDF4 as nc
 
-from .utils import create_crs_var, create_empty_var, create_time_var, create_var, create_id_var
+from .cf import CFWriter, datetimes2unixtimes, setncattrs
 
-def df2timeseries(df, ds, lat=0., lon=0., depth=0., global_attributes={}, platform_attributes={}, instrument_attributes={}, units={}):
-    """Convert a Pandas dataframe to a netCDF4 CF time series dataset.
-    The dataframe is assumed to be indexed by UTC datetime.
-    
-    :param df: the dataframe
-    :param ds: an open netCDF4 dataset
-    :param lat: the latitude of the time series
-    :param lon: the longitude of the time series
-    :param depth: the depth of the time series (altitude is not supported)
-    :param global_attributes: global attributes to add to the dataset
-    :param platform_attributes: attributes of the platform object
-    :param instrument_attributes: attributes of the instrument object
-    :param units: units for other variables, may be empty, any variables
-      not mentioned will be given the units '1'
-    """
+class TimeseriesWriter(CFWriter):
+    def from_dataframe(self, df, lat=0., lon=0., depth=0., global_attributes={}, platform_attributes={}, instrument_attributes={}, units={}):
+        """Convert a Pandas dataframe to a netCDF4 CF time series dataset.
+        The dataframe is assumed to be indexed by UTC datetime.
 
-    # global attributes
-    ds.Conventions = 'CF-1.6'
-    ds.featureType = 'timeSeries'
-    ds.cdm_data_type = 'Station'
+        :param df: the dataframe
+        :param ds: an open netCDF4 dataset
+        :param lat: the latitude of the time series
+        :param lon: the longitude of the time series
+        :param depth: the depth of the time series (altitude is not supported)
+        :param global_attributes: global attributes to add to the dataset
+        :param platform_attributes: attributes of the platform object
+        :param instrument_attributes: attributes of the instrument object
+        :param units: units for other variables, may be empty, any variables
+          not mentioned will be given the units '1'
+        """
 
-    # any user-specified global attributes
-    for k, v in global_attributes.items():
-        ds.setncattr(k, v)
+        # global attributes
+        setncattrs(self.ds, {
+            'Conventions': 'CF-1.6',
+            'featureType': 'timeSeries',
+            'cdm_data_type': 'Station'
+        })
 
-    # time series id and dimension
-    create_id_var(ds, 'timeseries')
-    
-    FILL_VALUE = -9999.9
+        # any user-specified global attributes
+        setncattrs(self.ds, global_attributes)
 
-    # time
-    create_time_var(ds, df.index)
+        # time series id and dimension
+        self.create_id_var('timeseries')
 
-    # lat / lon / depth
-    vlat = ds.createVariable('latitude', np.float, ('timeseries',))
-    vlat.units = 'degrees_north'
-    vlat.valid_min = -90.
-    vlat.valid_max = 90.
-    vlat.axis = 'Y'
-    vlat = lat
+        FILL_VALUE = -9999.9
 
-    vlon = ds.createVariable('longitude', np.float, ('timeseries',))
-    vlon.units = 'degrees_east'
-    vlon.valid_min = -180.
-    vlon.valid_max = 180.
-    vlon.axis = 'X'
-    vlon = lon
+        # time
+        times = datetimes2unixtimes(df.index)
+        self.create_time_var(times)
 
-    vdepth = ds.createVariable('depth', np.float, ('timeseries',))
-    vdepth.standard_name = 'depth'
-    vdepth.units = 'm'
-    vdepth.positive = 'down'
-    vdepth.axis = 'Z'
-    vdepth.valid_min = 0.
-    vdepth.valid_max = 10971.
-    vdepth = depth
+        # lat / lon / depth
+        vlat = self.create_lat_var(('timeseries',))
+        vlat = lat
 
-    # platform / instrument
-    create_empty_var(ds, 'platform', platform_attributes)
-    create_empty_var(ds, 'instrument', instrument_attributes)
+        vlon = self.create_lon_var(('timeseries',))
+        vlon = lon
 
-    # crs
-    create_crs_var(ds)
+        vdepth = self.create_depth_var(('timeseries',))
+        vdepth = depth
 
-    # all non-spatiotemporal variables
-    for varname in df.columns:
-        v = create_var(ds, varname, df[varname], ('timeseries','time'))
-        v.coordinates = 'time depth latitude longitude'
-        if varname in units:
-            v.units = units[varname]
-        else:
-            v.units = '1'
-        v.grid_mapping = 'crs'
-        v.platform = 'platform'
-        v.instrument = 'instrument'
+        # platform / instrument
+
+        platform_var = 'platform'
+        instrument_var = 'instrument'
+        
+        self.create_empty_var(platform_var, platform_attributes)
+        self.create_empty_var(instrument_var, instrument_attributes)
+
+        # crs
+        self.create_crs_var()
+
+        # all non-spatiotemporal variables
+        for varname in df.columns:
+            v = self.create_var(varname, df[varname], ('timeseries','time'))
+            v.coordinates = 'time depth latitude longitude'
+            if varname in units:
+                v.units = units[varname]
+            else:
+                v.units = '1'
+            v.grid_mapping = 'crs'
+            v.platform = platform_var
+            v.instrument = instrument_var
