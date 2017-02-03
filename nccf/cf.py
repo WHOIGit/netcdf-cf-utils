@@ -46,7 +46,6 @@ class CFWriter(object):
         idvar.cf_role = '{}_id'.format(name)
         idvar.long_name = name
         setncattrs(idvar, attributes)
-        idvar[:] = [0]
         return idvar
 
     def create_time_var(self, times, dimensions=None):
