@@ -10,6 +10,10 @@ def datetimes2unixtimes(dts):
     # convert datetime to floating point s since UNIX epoch
     return np.asarray([calendar.timegm(x.utctimetuple()) for x in dts]).astype(np.float)
 
+def unixtimes2datetimes(times):
+    """:param times: float array of s since UNIX epoch"""
+    return pd.to_datetime(times * 10e8)
+
 def setncattrs(obj, attr_dict):
     for k, v in attr_dict.items():
         obj.setncattr(k, v)
