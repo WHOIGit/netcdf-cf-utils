@@ -111,6 +111,16 @@ class CFWriter(object):
 
     def create_instrument_var(self, attributes={}):
         return self.create_empty_var('instrument', attributes)
+
+    def create_obs_vars(self, df, dimensions, units):
+        for varname in df.columns:
+            u = units if type(units) is str else units.get(varname)
+            v = self.create_var(varname, df[varname], dimensions=dimensions, units=u)
+            v.coordinates = 'time depth latitude longitude'
+            v.grid_mapping = 'crs'
+            v.platform = 'platform'
+            v.instrument = 'instrument'
         
+
 
         

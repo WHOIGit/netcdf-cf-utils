@@ -67,9 +67,4 @@ class TrajectoryWriter(CFWriter):
         self.create_crs_var()
 
         # all non-spatiotemporal variables
-        for varname in variables.columns:
-            v = self.create_var(varname, variables[varname], dimensions=var_dims, units=units.get(varname))
-            v.coordinates = 'time depth latitude longitude'
-            v.grid_mapping = 'crs'
-            v.platform = 'platform'
-            v.instrument = 'instrument'
+        self.create_obs_vars(variables, var_dims, units)

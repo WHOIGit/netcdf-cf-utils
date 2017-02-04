@@ -63,9 +63,4 @@ class TimeseriesWriter(CFWriter):
         self.create_crs_var()
 
         # all non-spatiotemporal variables
-        for varname in df.columns:
-            v = self.create_var(varname, df[varname], ('timeseries','time'), units=units.get(varname))
-            v.coordinates = 'time depth latitude longitude'
-            v.grid_mapping = 'crs'
-            v.platform = 'platform'
-            v.instrument = 'instrument'
+        self.create_obs_vars(df, ('timeseries','time'), units)
