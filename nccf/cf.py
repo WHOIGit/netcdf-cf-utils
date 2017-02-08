@@ -70,6 +70,8 @@ class CFWriter(object):
 
     def create_lat_var(self, dimensions):
         vlat = self.ds.createVariable('latitude', np.float, dimensions)
+        vlat.long_name = 'latitude'
+        vlat.standard_name = 'latitude'
         vlat.units = 'degrees_north'
         vlat.valid_min = -90.
         vlat.valid_max = 90.
@@ -78,6 +80,8 @@ class CFWriter(object):
 
     def create_lon_var(self, dimensions):
         vlon = self.ds.createVariable('longitude', np.float, dimensions)
+        vlon.long_name = 'longitude'
+        vlon.standard_name = 'longitude'
         vlon.units = 'degrees_east'
         vlon.valid_min = -180.
         vlon.valid_max = 180.
@@ -86,6 +90,7 @@ class CFWriter(object):
 
     def create_depth_var(self, dimensions):
         vdepth = self.ds.createVariable('depth', np.float, dimensions)
+        vdepth.long_name = 'depth'
         vdepth.standard_name = 'depth'
         vdepth.units = 'm'
         vdepth.positive = 'down'
