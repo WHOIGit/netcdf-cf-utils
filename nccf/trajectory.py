@@ -47,7 +47,7 @@ class TrajectoryWriter(CFWriter):
         
         # time
         times = datetimes2unixtimes(df.index)
-        self.create_time_var(times, dimensions=var_dims)
+        self.create_time_var(times)
 
         # lat / lon / depth
         lat = self.create_lat_var(dimensions=var_dims)
