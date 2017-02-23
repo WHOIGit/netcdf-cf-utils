@@ -4,6 +4,13 @@ import numpy as np
 
 FILL_VALUE = -9999.9
 
+TIME_VAR = 'time'
+LAT_VAR = 'latitude'
+LON_VAR = 'longitude'
+DEPTH_VAR = 'depth'
+PLATFORM_VAR = 'platform'
+INSTRUMENT_VAR = 'instrument'
+
 def datetimes2unixtimes(dts):
     """:param times: a datetime64 array, Series, or Index.
     returns float array of s since UNIX epoch"""
@@ -40,6 +47,18 @@ class CFWriter(object):
         ev = ''
         return ev
 
+    def get_feature_vars(self, feature_type):
+        """cdm vars include a feature type var and
+        x/y/z, platform, instrument."""
+        return ', '.join([
+            feature_type,
+            LAT_VAR,
+            LON_VAR,
+            DEPTH_VAR,
+            PLATFORM_VAR,
+            INSTRUMENT_VAR
+            ])
+    
     def create_id_var(self, name, long_name=None, attributes={}):
         """create a name with a {}_id cf_role"""
         cf_role = '{}_id'.format(name)
@@ -71,9 +90,9 @@ class CFWriter(object):
         return t
 
     def create_lat_var(self, dimensions=()):
-        vlat = self.ds.createVariable('latitude', np.float, dimensions)
-        vlat.long_name = 'latitude'
-        vlat.standard_name = 'latitude'
+        vlat = self.ds.createVariable(LAT_VAR, np.float, dimensions)
+        vlat.long_name = LAT_VAR
+        vlat.standard_name = LAT_VAR
         vlat.units = 'degrees_north'
         vlat.valid_min = -90.
         vlat.valid_max = 90.
@@ -81,9 +100,9 @@ class CFWriter(object):
         return vlat
 
     def create_lon_var(self, dimensions=()):
-        vlon = self.ds.createVariable('longitude', np.float, dimensions)
-        vlon.long_name = 'longitude'
-        vlon.standard_name = 'longitude'
+        vlon = self.ds.createVariable(LON_VAR, np.float, dimensions)
+        vlon.long_name = LON_VAR
+        vlon.standard_name = LON_VAR
         vlon.units = 'degrees_east'
         vlon.valid_min = -180.
         vlon.valid_max = 180.
@@ -91,9 +110,9 @@ class CFWriter(object):
         return vlon
 
     def create_depth_var(self, dimensions=()):
-        vdepth = self.ds.createVariable('depth', np.float, dimensions)
-        vdepth.long_name = 'depth'
-        vdepth.standard_name = 'depth'
+        vdepth = self.ds.createVariable(DEPTH_VAR, np.float, dimensions)
+        vdepth.long_name = DEPTH_VAR
+        vdepth.standard_name = DEPTH_VAR
         vdepth.units = 'm'
         vdepth.positive = 'down'
         vdepth.axis = 'Z'
@@ -114,16 +133,16 @@ class CFWriter(object):
         return v
 
     def create_platform_var(self, attributes={}):
-        return self.create_empty_var('platform', attributes)
+        return self.create_empty_var(PLATFORM_VAR, attributes)
 
     def create_instrument_var(self, attributes={}):
-        return self.create_empty_var('instrument', attributes)
+        return self.create_empty_var(INSTRUMENT_VAR, attributes)
 
     def create_obs_vars(self, df, dimensions, units):
         for varname in df.columns:
             u = units if type(units) is str else units.get(varname)
             v = self.create_var(varname, df[varname], dimensions=dimensions, units=u)
-            v.coordinates = 'time depth latitude longitude'
+            v.coordinates = ' '.join([TIME_VAR, DEPTH_VAR, LAT_VAR, LON_VAR])
             v.grid_mapping = 'crs'
-            v.platform = 'platform'
-            v.instrument = 'instrument'
+            v.platform = PLATFORM_VAR
+            v.instrument = INSTRUMENT_VAR

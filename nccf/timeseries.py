@@ -23,14 +23,7 @@ class TimeseriesWriter(CFWriter):
           not mentioned will be given the units '1'
         """
 
-        timeseries_vars = ', '.join([
-            'timeseries',
-            'latitude',
-            'longitude',
-            'depth',
-            'platform',
-            'instrument'
-        ])
+        timeseries_vars = self.get_feature_vars('timeseries')
         
         # global attributes
         setncattrs(self.ds, {

@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import netCDF4 as nc
 
-from .cf import CFWriter, datetimes2unixtimes, setncattrs
+from .cf import CFWriter, datetimes2unixtimes, setncattrs, LAT_VAR, LON_VAR, DEPTH_VAR
 
 class TrajectoryWriter(CFWriter):
     def from_dataframe(self, df, global_attributes={}, platform_attributes={}, instrument_attributes={}, units={}):
@@ -23,27 +23,32 @@ class TrajectoryWriter(CFWriter):
         """
 
         # spatiotemporal variables
-        lats = df['latitude']
-        lons = df['longitude']
-        depths = df['depth']
+        lats = df[LAT_VAR]
+        lons = df[LON_VAR]
+        depths = df[DEPTH_VAR]
 
         # all non spatiotemporal variables
-        variables = df[[col for col in df.columns if col not in ['latitude','longitude','depth']]]
+        variables = df[[col for col in df.columns if col not in [LAT_VAR, LON_VAR, DEPTH_VAR]]]
+
+        trajectory_vars = self.get_feature_vars('trajectory')
 
         # global attributes
         setncattrs(self.ds, {
             'Conventions': 'CF-1.6',
             'featureType': 'trajectory',
-            'cdm_data_type': 'Trajectory'
+            'cdm_data_type': 'Trajectory',
+            'cdm_trajectory_variables': trajectory_vars,
+            'subsetVariables': trajectory_vars
         })
 
         # any user-specified global attributes
         setncattrs(self.ds, global_attributes)
 
         # trajectory id and dimension
-        self.create_id_var('trajectory')
+        id_long_name = platform_attributes.get('long_name','my_platform')
+        self.create_id_var('trajectory', long_name=id_long_name)
 
-        var_dims = ('trajectory','time')
+        var_dims = ('time',)
         
         # time
         times = datetimes2unixtimes(df.index)
