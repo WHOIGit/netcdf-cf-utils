@@ -40,16 +40,18 @@ class CFWriter(object):
         ev = ''
         return ev
 
-    def create_id_var(self, name, attributes={}):
-        """create a dimension called name of size 1,
-        a var called name with that dimension, and
-        give it the attribute cf_role = {name}_id
-        and long name name"""
-        self.ds.createDimension(name,1)
-        idvar = self.ds.createVariable(name,int,(name,))
-        idvar.cf_role = '{}_id'.format(name)
-        idvar.long_name = name
+    def create_id_var(self, name, long_name=None, attributes={}):
+        """create a name with a {}_id cf_role"""
+        cf_role = '{}_id'.format(name)
+        dim_name = '{}_dim'.format(name)
+        if long_name is None:
+            long_name = name
+        self.ds.createDimension(dim_name, size=len(long_name))
+        idvar = self.ds.createVariable(name, 'S1', (dim_name,))
+        idvar.cf_role = cf_role
+        idvar.long_name = long_name
         setncattrs(idvar, attributes)
+        idvar[:] = list(long_name)
         return idvar
 
     def create_time_var(self, times, dimensions=None):
@@ -68,7 +70,7 @@ class CFWriter(object):
         t[:] = times
         return t
 
-    def create_lat_var(self, dimensions):
+    def create_lat_var(self, dimensions=()):
         vlat = self.ds.createVariable('latitude', np.float, dimensions)
         vlat.long_name = 'latitude'
         vlat.standard_name = 'latitude'
@@ -78,7 +80,7 @@ class CFWriter(object):
         vlat.axis = 'Y'
         return vlat
 
-    def create_lon_var(self, dimensions):
+    def create_lon_var(self, dimensions=()):
         vlon = self.ds.createVariable('longitude', np.float, dimensions)
         vlon.long_name = 'longitude'
         vlon.standard_name = 'longitude'
@@ -88,7 +90,7 @@ class CFWriter(object):
         vlon.axis = 'X'
         return vlon
 
-    def create_depth_var(self, dimensions):
+    def create_depth_var(self, dimensions=()):
         vdepth = self.ds.createVariable('depth', np.float, dimensions)
         vdepth.long_name = 'depth'
         vdepth.standard_name = 'depth'
@@ -125,7 +127,3 @@ class CFWriter(object):
             v.grid_mapping = 'crs'
             v.platform = 'platform'
             v.instrument = 'instrument'
-        
-
-
-        

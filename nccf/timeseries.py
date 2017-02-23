@@ -23,18 +23,30 @@ class TimeseriesWriter(CFWriter):
           not mentioned will be given the units '1'
         """
 
+        timeseries_vars = ', '.join([
+            'timeseries',
+            'latitude',
+            'longitude',
+            'depth',
+            'platform',
+            'instrument'
+        ])
+        
         # global attributes
         setncattrs(self.ds, {
             'Conventions': 'CF-1.6',
             'featureType': 'timeSeries',
-            'cdm_data_type': 'Station'
+            'cdm_data_type': 'TimeSeries',
+            'cdm_timeseries_variables': timeseries_vars,
+            'subsetVariables': timeseries_vars
         })
-
+        
         # any user-specified global attributes
         setncattrs(self.ds, global_attributes)
 
         # time series id and dimension
-        self.create_id_var('timeseries')
+        id_long_name = platform_attributes.get('long_name','my_station')
+        self.create_id_var('timeseries', long_name=id_long_name)
 
         FILL_VALUE = -9999.9
 
@@ -42,16 +54,14 @@ class TimeseriesWriter(CFWriter):
         times = datetimes2unixtimes(df.index)
         self.create_time_var(times)
 
-        scalar_dim = ('timeseries',)
-        
         # lat / lon / depth
-        vlat = self.create_lat_var(dimensions=scalar_dim)
+        vlat = self.create_lat_var()
         vlat[:] = lat
 
-        vlon = self.create_lon_var(dimensions=scalar_dim)
+        vlon = self.create_lon_var()
         vlon[:] = lon
 
-        vdepth = self.create_depth_var(dimensions=scalar_dim)
+        vdepth = self.create_depth_var()
         vdepth[:] = depth
 
         # platform / instrument
@@ -63,4 +73,4 @@ class TimeseriesWriter(CFWriter):
         self.create_crs_var()
 
         # all non-spatiotemporal variables
-        self.create_obs_vars(df, ('timeseries','time'), units)
+        self.create_obs_vars(df, ('time'), units)
